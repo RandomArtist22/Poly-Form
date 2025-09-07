@@ -17,7 +17,7 @@ interface TranslationPanelProps {
 
 const languages = [
   { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
-  { code: 'bn', name: 'Bengali', flag: '🇧🇩' },
+  { code: 'bn', name: 'Bengali', flag: '🇮🇳' },
   { code: 'te', name: 'Telugu', flag: '🇮🇳' },
   { code: 'mr', name: 'Marathi', flag: '🇮🇳' },
   { code: 'ta', name: 'Tamil', flag: '🇮🇳' },
