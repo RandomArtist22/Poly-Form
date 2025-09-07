@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Loader, CheckCircle, Settings, Play } from 'lucide-react';
 import LaTeXRenderer from './LaTeXRenderer';
+import { generateQuiz } from '../api'; // Import the API function
 
 interface Document {
   id: string;
@@ -32,58 +33,7 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: number }>({});
   const [showResults, setShowResults] = useState(false);
-
-  const generateQuiz = async (content: string, count: number, difficulty: string): Promise<Quiz> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const mockQuestions = [
-      {
-        id: '1',
-        question: 'What is the fundamental equation relating energy and mass according to Einstein\'s theory of relativity?',
-        options: ['$E = mc$', '$E = mc^2$', '$E = m^2c$', '$E = \\frac{mc^2}{2}$'],
-        correctAnswer: 1,
-        explanation: 'Einstein\'s famous equation $E = mc^2$ demonstrates the equivalence of mass and energy, where $c$ is the speed of light.'
-      },
-      {
-        id: '2',
-        question: 'Which mathematical concept is used to find the area under a curve?',
-        options: ['Differentiation', 'Integration', 'Multiplication', 'Substitution'],
-        correctAnswer: 1,
-        explanation: 'Integration is the mathematical process used to find areas under curves, among other applications.'
-      },
-      {
-        id: '3',
-        question: 'What is the quadratic formula used to solve equations of the form $ax^2 + bx + c = 0$?',
-        options: [
-          '$x = \\frac{-b}{2a}$',
-          '$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$',
-          '$x = \\frac{b \\pm \\sqrt{b^2+4ac}}{2a}$',
-          '$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{a}$'
-        ],
-        correctAnswer: 1,
-        explanation: 'The quadratic formula $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ provides the solution(s) to any quadratic equation.'
-      },
-      {
-        id: '4',
-        question: 'In physics, what does Newton\'s second law state?',
-        options: ['$F = ma$', '$F = m/a$', '$F = a/m$', '$F = m + a$'],
-        correctAnswer: 0,
-        explanation: 'Newton\'s second law states that force equals mass times acceleration: $F = ma$.'
-      },
-      {
-        id: '5',
-        question: 'Which of the following represents the derivative of $x^n$ with respect to $x$?',
-        options: ['$nx^{n-1}$', '$nx^{n+1}$', '$x^{n-1}$', '$\\frac{x^{n+1}}{n+1}$'],
-        correctAnswer: 0,
-        explanation: 'The power rule states that the derivative of $x^n$ is $nx^{n-1}$.'
-      }
-    ];
-
-    return {
-      questions: mockQuestions.slice(0, count)
-    };
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerateQuiz = async () => {
     if (!selectedDoc) return;
@@ -97,7 +47,13 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
     setShowResults(false);
     
     try {
-      const quiz = await generateQuiz(document.content, questionCount, difficulty);
+      const response = await generateQuiz(document.id, document.content, questionCount, difficulty);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Quiz generation failed');
+      }
+
+      const quiz = response.data.quiz;
       setCurrentQuiz(quiz);
 
       onResult('quiz', `${document.name} - Quiz (${questionCount} questions)`, {
@@ -106,8 +62,10 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
         questionCount,
         difficulty
       });
-    } catch (error) {
+      setError(null); // Clear any previous errors
+    } catch (error: any) {
       console.error('Quiz generation failed:', error);
+      setError(error.message || 'Failed to generate quiz. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -135,31 +93,31 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
 
   if (documents.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Documents Available</h3>
-        <p className="text-gray-500">Upload documents in the Content Input tab to generate quizzes.</p>
+      <div className="p-8 text-center dark:bg-dark-background dark:text-dark-text-secondary">
+        <FileText className="h-16 w-16 text-gray-300 dark:text-dark-text-secondary mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">No Documents Available</h3>
+        <p className="text-gray-500 dark:text-dark-text-secondary">Upload documents in the Content Input tab to generate quizzes.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Interactive Quiz Generator</h2>
-        <p className="text-gray-600">Generate customized quizzes from your content with adjustable difficulty and question count.</p>
+    <div className="p-10 dark:bg-dark-background dark:text-dark-text rounded-lg space-y-8">
+      <div className="mb-10">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-3">Interactive Quiz Generator</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary text-lg">Generate customized quizzes from your content with adjustable difficulty and question count.</p>
       </div>
 
       {!currentQuiz ? (
         <div className="max-w-2xl mx-auto space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               Select Document
             </label>
             <select
               value={selectedDoc}
               onChange={(e) => setSelectedDoc(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-dark-input-bg dark:border-dark-input-border dark:text-dark-text"
             >
               <option value="">Choose a document...</option>
               {documents.map(doc => (
@@ -172,13 +130,13 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Number of Questions
               </label>
               <select
                 value={questionCount}
                 onChange={(e) => setQuestionCount(Number(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-dark-input-bg dark:border-dark-input-border dark:text-dark-text"
               >
                 <option value={3}>3 Questions</option>
                 <option value={5}>5 Questions</option>
@@ -189,13 +147,13 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Difficulty Level
               </label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-dark-input-bg dark:border-dark-input-border dark:text-dark-text"
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -207,7 +165,7 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
           <button
             onClick={handleGenerateQuiz}
             disabled={!selectedDoc || isGenerating}
-            className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-dark-button-inactive-bg disabled:text-dark-button-inactive-text flex items-center justify-center space-x-2"
           >
             {isGenerating ? (
               <>
@@ -221,16 +179,23 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
               </>
             )}
           </button>
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 dark:bg-red-900 dark:border-red-700 dark:text-red-300" role="alert">
+              <strong className="font-bold">Error:</strong>
+              <span className="block sm:inline"> {error}</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-text">
               Quiz: {documents.find(doc => doc.id === selectedDoc)?.name}
             </h3>
             <div className="flex items-center space-x-4">
               {showResults && (
-                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-medium">
+                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-medium dark:bg-blue-900 dark:text-blue-200">
                   Score: {calculateScore()}%
                 </div>
               )}
@@ -240,7 +205,7 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
                   setUserAnswers({});
                   setShowResults(false);
                 }}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 dark:text-dark-text-secondary dark:hover:text-dark-text"
               >
                 Generate New Quiz
               </button>
@@ -249,13 +214,13 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
 
           <div className="space-y-6">
             {currentQuiz.questions.map((question, index) => (
-              <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-6">
+              <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-6 dark:bg-dark-surface dark:border-dark-input-border">
                 <div className="mb-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                  <h4 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">
                     Question {index + 1}
                   </h4>
-                  <div className="text-gray-700">
-                    <LaTeXRenderer content={question.question} />
+                  <div className="text-gray-700 dark:text-dark-text-secondary">
+                    <LaTeXRenderer content={question.question ?? ''} />
                   </div>
                 </div>
 
@@ -269,16 +234,16 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
                     
                     if (showCorrectness) {
                       if (isCorrect) {
-                        buttonClass += 'border-green-500 bg-green-50 text-green-700';
+                        buttonClass += 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900 dark:border-green-700 dark:text-green-200';
                       } else if (isSelected && !isCorrect) {
-                        buttonClass += 'border-red-500 bg-red-50 text-red-700';
+                        buttonClass += 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-200';
                       } else {
-                        buttonClass += 'border-gray-200 bg-gray-50';
+                        buttonClass += 'border-gray-200 bg-gray-50 dark:border-dark-input-border dark:bg-dark-input-bg dark:text-dark-text';
                       }
                     } else {
                       buttonClass += isSelected 
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300';
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:border-blue-400 dark:text-blue-200'
+                        : 'border-gray-200 hover:border-gray-300 dark:border-dark-input-border dark:hover:border-dark-scroll-thumb dark:bg-dark-input-bg dark:text-dark-text';
                     }
 
                     return (
@@ -288,17 +253,17 @@ const QuizPanel: React.FC<QuizPanelProps> = ({ documents, onResult }) => {
                         disabled={showResults}
                         className={buttonClass}
                       >
-                        <LaTeXRenderer content={option} />
+                        <LaTeXRenderer content={option ?? ''} />
                       </button>
                     );
                   })}
                 </div>
 
                 {showResults && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="text-sm font-medium text-blue-900 mb-1">Explanation:</div>
-                    <div className="text-blue-700">
-                      <LaTeXRenderer content={question.explanation} />
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900 dark:border-blue-700">
+                    <div className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">Explanation:</div>
+                    <div className="text-blue-700 dark:text-blue-300">
+                      <LaTeXRenderer content={question.explanation ?? ''} />
                     </div>
                   </div>
                 )}

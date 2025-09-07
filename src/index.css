@@ -1,3 +1,350 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom scrollbar styles for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 12px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: theme('colors.dark-scroll-track');
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: theme('colors.dark-scroll-thumb');
+  border-radius: 10px;
+  border: 3px solid theme('colors.dark-scroll-track');
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.dark-text-secondary');
+}
+
+/* Enhanced LaTeX rendering styles */
+.math-inline {
+  font-style: italic;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Times New Roman', serif;
+}
+
+.math-display {
+  font-style: italic;
+  color: #1e40af;
+  background: rgba(30, 64, 175, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 8px 0;
+  display: block;
+  text-align: center;
+  font-family: 'Times New Roman', serif;
+  border-left: 3px solid #3b82f6;
+}
+
+.math-frac {
+  display: inline-block;
+  vertical-align: middle;
+  text-align: center;
+  margin: 0 4px;
+  position: relative;
+  font-size: 0.9em;
+}
+
+.math-num {
+  display: block;
+  padding: 0 4px 1px 4px;
+  position: relative;
+  line-height: 1.2;
+}
+
+.math-den {
+  display: block;
+  padding: 1px 4px 0 4px;
+  position: relative;
+  line-height: 1.2;
+}
+
+.math-frac::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.math-matrix {
+  display: inline-block;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  margin: 4px;
+  vertical-align: middle;
+}
+
+.math-matrix td {
+  padding: 2px 8px;
+  text-align: center;
+}
+
+.math-bb {
+  font-weight: bold;
+  font-family: 'Times New Roman', serif;
+}
+
+.math-lim {
+  font-size: 0.9em;
+}
+
+.math-func {
+  font-style: italic;
+  font-family: 'Times New Roman', serif;
+}
+
+.math-root {
+  position: relative;
+  display: inline-block;
+}
+
+.math-root sup {
+  position: absolute;
+  top: -8px;
+  left: -2px;
+  font-size: 0.7em;
+}
+
+/* Overline and accents */
+.math-overline {
+  text-decoration: overline;
+  text-decoration-thickness: 1px;
+}
+
+.math-underline {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+.math-hat {
+  position: relative;
+}
+
+.math-hat::after {
+  content: '^';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.math-tilde {
+  position: relative;
+}
+
+.math-tilde::after {
+  content: '~';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.math-vec {
+  position: relative;
+}
+
+.math-vec::after {
+  content: '→';
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  font-size: 0.8em;
+}
+
+.math-dot {
+  position: relative;
+}
+
+.math-dot::after {
+  content: '˙';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9em;
+}
+
+.math-ddot {
+  position: relative;
+}
+
+.math-ddot::after {
+  content: '¨';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9em;
+}
+
+/* Enhanced matrix styles */
+.math-matrix {
+  display: inline-table;
+  border-collapse: collapse;
+  margin: 4px;
+  vertical-align: middle;
+}
+
+.math-matrix td {
+  padding: 4px 8px;
+  text-align: center;
+  border: none;
+}
+
+.math-pmatrix::before,
+.math-pmatrix::after {
+  content: '(';
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.math-pmatrix::after {
+  content: ')';
+}
+
+.math-bmatrix::before,
+.math-bmatrix::after {
+  content: '[';
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.math-bmatrix::after {
+  content: ']';
+}
+
+.math-vmatrix::before,
+.math-vmatrix::after {
+  content: '|';
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.math-vmatrix::after {
+  content: '|';
+}
+
+.math-Vmatrix::before,
+.math-Vmatrix::after {
+  content: '‖';
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+
+.math-Vmatrix::after {
+  content: '‖';
+}
+
+/* Dark mode LaTeX styles */
+.dark .math-inline {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+}
+
+.dark .math-display {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.1);
+  border-left-color: #60a5fa;
+}
+
+.dark .math-matrix {
+  border-color: #93c5fd;
+}
+
+.dark .math-overline,
+.dark .math-underline {
+  text-decoration-color: #93c5fd;
+}
+
+/* Enhanced LaTeX content formatting */
+.latex-content p {
+  margin-bottom: 1rem;
+  line-height: 1.8;
+}
+
+.latex-content h1,
+.latex-content h2,
+.latex-content h3 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.latex-content h1:first-child,
+.latex-content h2:first-child,
+.latex-content h3:first-child {
+  margin-top: 0;
+}
+
+.latex-content ul,
+.latex-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.latex-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.latex-content br {
+  margin-bottom: 0.5rem;
+}
+
+/* Better spacing for mathematical expressions */
+.latex-content .math-inline {
+  margin: 0 0.25rem;
+}
+
+.latex-content .math-display {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+  border-radius: 0 6px 6px 0;
+}
+
+.dark .latex-content .math-display {
+  background: rgba(147, 197, 253, 0.1);
+  border-left-color: #60a5fa;
+}
+
+/* Improved list styling */
+.latex-content li {
+  padding-left: 0.5rem;
+}
+
+/* Better heading hierarchy */
+.latex-content h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.latex-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.latex-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}

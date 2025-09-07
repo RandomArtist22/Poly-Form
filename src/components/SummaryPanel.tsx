@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Loader, CheckCircle, FileText, Sliders } from 'lucide-react';
 import LaTeXRenderer from './LaTeXRenderer';
+import { summarizeContent } from '../api'; // Import the API function
 
 interface Document {
   id: string;
@@ -19,82 +20,13 @@ const SummaryPanel: React.FC<SummaryPanelProps> = ({ documents, onResult }) => {
   const [summaryLength, setSummaryLength] = useState<'short' | 'medium' | 'detailed'>('medium');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summaries, setSummaries] = useState<{ [key: string]: string }>({});
+  const [error, setError] = useState<string | null>(null);
 
   const summaryOptions = [
     { value: 'short', label: 'Short Summary', description: '2-3 key points' },
     { value: 'medium', label: 'Medium Summary', description: '5-7 main concepts' },
     { value: 'detailed', label: 'Detailed Summary', description: 'Comprehensive overview' }
   ];
-
-  const simulateSummarization = async (content: string, length: string): Promise<string> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Mock summaries based on length
-    const mockSummaries: { [key: string]: string } = {
-      'short': `**Key Points:**
-
-• This document covers the fundamental concepts and principles
-• Important methodologies and approaches are discussed
-• Practical applications and examples are provided
-
-**Mathematical Concepts:**
-$E = mc^2$ demonstrates the relationship between energy and mass.`,
-      
-      'medium': `**Overview:**
-This comprehensive document explores various theoretical and practical aspects of the subject matter, providing detailed analysis and insights.
-
-**Main Topics Covered:**
-1. **Fundamental Principles**: Basic concepts and theoretical foundations
-2. **Methodology**: Systematic approaches and techniques
-3. **Applications**: Real-world implementations and use cases
-4. **Analysis**: Critical evaluation and interpretation
-5. **Future Directions**: Emerging trends and developments
-
-**Key Mathematical Relations:**
-- Energy-mass equivalence: $E = mc^2$
-- Quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$
-- Integration by parts: $\\int u dv = uv - \\int v du$`,
-      
-      'detailed': `**Comprehensive Summary:**
-
-This document presents an in-depth exploration of complex topics, combining theoretical foundations with practical applications. The content is structured to provide both conceptual understanding and actionable insights.
-
-**Detailed Analysis:**
-
-**Section 1: Theoretical Framework**
-- Establishes fundamental principles and core concepts
-- Provides historical context and development
-- Discusses various theoretical models and their applications
-
-**Section 2: Methodological Approaches**
-- Systematic analysis of different techniques
-- Comparative evaluation of approaches
-- Best practices and implementation guidelines
-
-**Section 3: Practical Applications**
-- Real-world case studies and examples
-- Industry applications and use cases
-- Performance metrics and evaluation criteria
-
-**Section 4: Advanced Concepts**
-- Complex relationships and interdependencies
-- Mathematical modeling and analysis
-- Computational approaches and algorithms
-
-**Key Mathematical Formulations:**
-- Einstein's mass-energy equivalence: $E = mc^2$
-- Newton's second law: $F = ma$
-- Maxwell's equations in differential form:
-  - $\\nabla \\cdot E = \\frac{\\rho}{\\epsilon_0}$
-  - $\\nabla \\times E = -\\frac{\\partial B}{\\partial t}$
-
-**Conclusions and Future Work:**
-The document concludes with recommendations for future research and practical implementation strategies.`
-    };
-
-    return mockSummaries[length] || mockSummaries['medium'];
-  };
 
   const handleSummarize = async () => {
     if (!selectedDoc) return;
@@ -105,7 +37,14 @@ The document concludes with recommendations for future research and practical im
     setIsSummarizing(true);
     
     try {
-      const summary = await simulateSummarization(document.content, summaryLength);
+      const response = await summarizeContent(document.id, document.content, summaryLength);
+      console.log('API Response in SummaryPanel:', response);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Summarization failed');
+      }
+
+      const summary = response.data.summary;
       
       setSummaries(prev => ({
         ...prev,
@@ -118,8 +57,10 @@ The document concludes with recommendations for future research and practical im
         summaryLength,
         documentName: document.name
       });
-    } catch (error) {
+      setError(null); // Clear any previous errors
+    } catch (error: any) {
       console.error('Summarization failed:', error);
+      setError(error.message || 'Failed to generate summary. Please try again.');
     } finally {
       setIsSummarizing(false);
     }
@@ -127,32 +68,32 @@ The document concludes with recommendations for future research and practical im
 
   if (documents.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Documents Available</h3>
-        <p className="text-gray-500">Upload documents in the Content Input tab to start summarizing.</p>
+      <div className="p-8 text-center dark:bg-dark-background dark:text-dark-text-secondary">
+        <BookOpen className="h-16 w-16 text-gray-300 dark:text-dark-text-secondary mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">No Documents Available</h3>
+        <p className="text-gray-500 dark:text-dark-text-secondary">Upload documents in the Content Input tab to start summarizing.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Content Summarization</h2>
-        <p className="text-gray-600">Generate intelligent summaries with customizable detail levels, preserving LaTeX formatting.</p>
+    <div className="p-10 dark:bg-dark-background dark:text-dark-text rounded-lg space-y-8">
+      <div className="mb-10">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-3">Content Summarization</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary text-lg">Generate intelligent summaries with customizable detail levels, preserving LaTeX formatting.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Summarization Controls */}
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               Select Document
             </label>
             <select
               value={selectedDoc}
               onChange={(e) => setSelectedDoc(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-dark-input-bg dark:border-dark-input-border dark:text-dark-text"
             >
               <option value="">Choose a document...</option>
               {documents.map(doc => (
@@ -164,7 +105,7 @@ The document concludes with recommendations for future research and practical im
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-3">
               Summary Length
             </label>
             <div className="space-y-3">
@@ -174,8 +115,8 @@ The document concludes with recommendations for future research and practical im
                   onClick={() => setSummaryLength(option.value as 'short' | 'medium' | 'detailed')}
                   className={`w-full p-4 text-left rounded-lg border transition-colors ${
                     summaryLength === option.value
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900 dark:border-blue-400 dark:text-blue-200'
+                      : 'border-gray-200 hover:border-gray-300 dark:border-dark-input-border dark:hover:border-dark-scroll-thumb dark:bg-dark-surface dark:text-dark-text'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -193,7 +134,7 @@ The document concludes with recommendations for future research and practical im
           <button
             onClick={handleSummarize}
             disabled={!selectedDoc || isSummarizing}
-            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-dark-button-inactive-bg disabled:text-dark-button-inactive-text disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isSummarizing ? (
               <>
@@ -207,14 +148,21 @@ The document concludes with recommendations for future research and practical im
               </>
             )}
           </button>
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative dark:bg-red-900 dark:border-red-700 dark:text-red-300" role="alert">
+              <strong className="font-bold">Error:</strong>
+              <span className="block sm:inline"> {error}</span>
+            </div>
+          )}
         </div>
 
         {/* Preview */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {selectedDoc && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Original Content</h3>
-              <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-text mb-4">Original Content</h3>
+              <div className="bg-gray-50 rounded-lg p-6 max-h-80 overflow-y-auto dark:bg-dark-surface dark:text-dark-text">
                 <LaTeXRenderer content={documents.find(doc => doc.id === selectedDoc)?.content || ''} />
               </div>
             </div>
@@ -222,13 +170,13 @@ The document concludes with recommendations for future research and practical im
 
           {summaries[`${selectedDoc}-${summaryLength}`] && (
             <div>
-              <div className="flex items-center space-x-2 mb-3">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex items-center space-x-2 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-text">
                   {summaryLength.charAt(0).toUpperCase() + summaryLength.slice(1)} Summary
                 </h3>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 max-h-96 overflow-y-auto dark:bg-green-900 dark:border-green-700 dark:text-green-100">
                 <LaTeXRenderer content={summaries[`${selectedDoc}-${summaryLength}`]} />
               </div>
             </div>
