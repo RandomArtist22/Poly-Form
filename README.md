@@ -60,7 +60,7 @@ Polyform is a comprehensive AI-powered content processing application that trans
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/RandomArtist22/Poly-Form.git
-   cd polyform
+   cd Poly-Form
    ```
 
 2. **Install dependencies:**
