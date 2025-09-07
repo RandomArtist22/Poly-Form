@@ -133,6 +133,37 @@ If you prefer to run frontend and backend separately:
 - Get AI-powered responses based on document content
 - Continue conversation with full context
 
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. **Connect your repository to Vercel:**
+   - Import your GitHub repository to Vercel
+   - Vercel will automatically detect the configuration
+
+2. **Set Environment Variables:**
+   - In Vercel dashboard, go to Project Settings > Environment Variables
+   - Add: `GEMINI_API_KEY` with your Google Gemini API key
+
+3. **Deploy:**
+   - Vercel will build and deploy both frontend and backend automatically
+   - The API endpoints will be available at `/api/*`
+
+### Manual Deployment
+
+For manual deployment or other platforms:
+
+1. **Build the frontend:**
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy the `dist` folder** to your static hosting service
+
+3. **Deploy the backend** (api/ folder) to a serverless platform or VPS
+
+4. **Set environment variables** for both frontend and backend deployments
+
 ## 🛠️ Technology Stack
 
 ### Frontend

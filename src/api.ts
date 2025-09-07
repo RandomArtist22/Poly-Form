@@ -1,5 +1,5 @@
 // src/api.ts
-const API_BASE_URL = 'http://localhost:3001/api'; // Placeholder for your backend API
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin + '/api' : 'http://localhost:3001/api'); // Use environment variable or same origin for Vercel
 
 interface ApiResponse<T> {
   success: boolean;
