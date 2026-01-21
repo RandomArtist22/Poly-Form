@@ -83,7 +83,7 @@ Poly-Form/
 
 ## License
 
-MIT © 2024
+MIT © 2026
 
 ---
 
