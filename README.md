@@ -1,194 +1,90 @@
 # Polyform
 
-AI-Powered Content Processing Suite
+> AI-Powered Content Processing Suite built with React, TypeScript, and Google Gemini AI.
 
-[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-blue.svg)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-38B2AC.svg)](https://tailwindcss.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-5.1.0-black.svg)](https://expressjs.com/)
+[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.1-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![Express](https://img.shields.io/badge/Express-5.1.0-000000?logo=express)](https://expressjs.com/)
 
-Polyform is a comprehensive AI-powered content processing application that transforms how you work with documents. Upload content, translate it to multiple languages, generate intelligent summaries, create interactive quizzes, and chat with your documents using advanced AI.
+## Overview
 
-## ✨ Features
+Polyform transforms document workflows through AI-powered translation, summarization, quiz generation, and interactive chat capabilities—all with native LaTeX support.
 
-### 📝 Content Input
-- **File Upload**: Support for text files (.txt, .md), PDFs, and other document formats
-- **Direct Input**: Paste content directly with LaTeX support
-- **Drag & Drop**: Intuitive file upload interface
-- **Multi-format Support**: Handles various text encodings and formats
+## Features
 
-### 🌍 Translation
-- **Multi-language Support**: Translate to 14+ languages including Hindi, Bengali, Telugu, Marathi, Tamil, Gujarati, Kannada, Malayalam, Punjabi, Odia, Spanish, French, German, Chinese, and Arabic
-- **LaTeX Preservation**: Maintains mathematical formatting during translation
-- **Real-time Processing**: Fast translation using Google Gemini AI
+| Feature | Description |
+|---------|-------------|
+| **Translation** | Multi-language support (14+ languages) with LaTeX preservation |
+| **Summarization** | Customizable length options: short, medium, detailed |
+| **Quiz Generation** | Adaptive difficulty with 3-20 questions per quiz |
+| **Document Chat** | Contextual AI conversations about uploaded content |
+| **LaTeX Rendering** | Full mathematical notation support |
 
-### 📋 Summarization
-- **Customizable Length**: Short (2-3 points), Medium (5-7 concepts), or Detailed summaries
-- **Intelligent Analysis**: AI-powered content understanding
-- **LaTeX Support**: Preserves mathematical expressions in summaries
-
-### 🎯 Quiz Generation
-- **Adaptive Difficulty**: Easy, Medium, and Hard difficulty levels
-- **Customizable Count**: Generate 3-20 questions per quiz
-- **Interactive Interface**: Real-time answer feedback and scoring
-- **LaTeX Integration**: Mathematical expressions in questions and answers
-
-### 💬 Chat with Documents
-- **Contextual Conversations**: AI understands your document content
-- **LaTeX Support**: Mathematical discussions with proper rendering
-- **Real-time Responses**: Instant answers to your questions
-- **Document Memory**: Maintains context throughout the conversation
-
-### 🎨LaTeX Support
-- **Symbols**: Support for mathematical symbols, operators, and notation
-- **Matrix Rendering**: Proper display of matrices and arrays
-- **Blackboard Bold**: Mathematical sets (ℝ, ℕ, ℤ, ℚ, ℂ)
-- **Accents & Decorations**: Overline, underline, hats, tildes, vectors
-- **Advanced Operators**: Integrals, sums, products, limits, and more
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **Google Gemini API Key** (for AI features)
+- Node.js v18+
+- Google Gemini API Key
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/RandomArtist22/Poly-Form.git
-   cd Poly-Form
-   ```
+```bash
+# Clone and install
+git clone https://github.com/RandomArtist22/Poly-Form.git
+cd Poly-Form
+npm install
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+# Configure environment
+echo "GEMINI_API_KEY=your_api_key" > .env
+echo "GEMINI_API_KEY=your_api_key" > backend/.env
 
-3. **Set up environment variables:**
+# Start development server
+npm run dev
+```
 
-   Create a `.env` file in the root directory:
-   ```env
-   GEMINI_API_KEY=your_google_gemini_api_key_here
-   ```
+The application runs on `http://localhost:5173` (frontend) and `http://localhost:3001` (backend).
 
-   Create a `backend/.env` file:
-   ```env
-   GEMINI_API_KEY=your_google_gemini_api_key_here
-   ```
+## Deployment
 
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
+### Vercel
 
-   This will start both the frontend (port 5173) and backend (port 3001) servers concurrently.
+1. Import repository to Vercel
+2. Add `GEMINI_API_KEY` in Project Settings → Environment Variables
+3. Deploy automatically
 
-### Alternative: Manual Setup
+### Manual
 
-If you prefer to run frontend and backend separately:
+```bash
+npm run build
+# Deploy dist/ folder to static hosting
+# Deploy api/ folder to serverless platform
+```
 
-1. **Start the backend:**
-   ```bash
-   cd backend
-   npm install
-   npm start
-   ```
+## Tech Stack
 
-2. **Start the frontend (in a new terminal):**
-   ```bash
-   npm run build  # or npm run dev for development
-   ```
+**Frontend:** React 18, TypeScript, Tailwind CSS, Vite  
+**Backend:** Node.js, Express.js, Google Gemini AI  
+**Utilities:** PDF.js, Lucide React
 
-## 📖 Usage
+## Project Structure
 
-### 1. Content Input
-- **Upload Files**: Drag and drop or click to select files
-- **Direct Input**: Paste content in the text area
-- **LaTeX Support**: Use mathematical expressions like `$E = mc^2$` or `\[ \int_{0}^{\infty} e^{-x^2} dx \]`
+```
+Poly-Form/
+├── src/
+│   ├── components/    # React components
+│   ├── api.ts         # API client
+│   └── App.tsx        # Main application
+├── api/               # Vercel serverless functions
+├── backend/           # Express development server
+└── public/            # Static assets
+```
 
-### 2. Translation
-- Select a document from the dropdown
-- Choose target language from the language grid
-- Click "Translate Content" to process
-- View results in the "Results" tab
+## License
 
-### 3. Summarization
-- Choose document and summary length
-- Select from Short, Medium, or Detailed options
-- Generate and view summary with preserved LaTeX formatting
-
-### 4. Quiz Generation
-- Select document and quiz parameters
-- Choose question count (3-20) and difficulty level
-- Take the interactive quiz with real-time feedback
-- View final score and explanations
-
-### 5. Chat with Documents
-- Select a document to chat about
-- Ask questions in natural language
-- Get AI-powered responses based on document content
-- Continue conversation with full context
-
-## 🚀 Deployment
-
-### Vercel Deployment
-
-1. **Connect your repository to Vercel:**
-   - Import your GitHub repository to Vercel
-   - Vercel will automatically detect the configuration
-
-2. **Set Environment Variables:**
-   - In Vercel dashboard, go to Project Settings > Environment Variables
-   - Add: `GEMINI_API_KEY` with your Google Gemini API key
-
-3. **Deploy:**
-   - Vercel will build and deploy both frontend and backend automatically
-   - The API endpoints will be available at `/api/*`
-
-### Manual Deployment
-
-For manual deployment or other platforms:
-
-1. **Build the frontend:**
-   ```bash
-   npm run build
-   ```
-
-2. **Deploy the `dist` folder** to your static hosting service
-
-3. **Deploy the backend** (api/ folder) to a serverless platform or VPS
-
-4. **Set environment variables** for both frontend and backend deployments
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **React 18** - Modern React with hooks and concurrent features
-- **TypeScript** - Type-safe JavaScript development
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Beautiful icon library
-- **Vite** - Fast build tool and development server
-
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **Google Gemini AI** - Advanced AI for content processing
-- **CORS** - Cross-origin resource sharing
-- **PDF.js** - PDF parsing and text extraction
-
-### Key Dependencies
-- `@google/generative-ai` - Google Gemini AI integration
-- `pdfjs-dist` - PDF document processing
-- `lucide-react` - Icon components
-- `tailwindcss` - CSS framework
-- `concurrently` - Run multiple commands simultaneously
-
-
+MIT © 2024
 
 ---
 
-**Polyform** - Transform your content with the power of AI! 🚀
+**Polyform** — Transform content with AI.

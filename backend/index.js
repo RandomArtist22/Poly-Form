@@ -1,127 +1,143 @@
-require('dotenv').config(); // Load environment variables
+/**
+ * Polyform Backend Server
+ *
+ * Express.js server providing AI-powered content processing API endpoints.
+ * Uses Google Gemini AI for translation, summarization, quiz generation, and chat.
+ */
+
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenAI } = require('@google/genai');
-const app = express();
-const PORT = 3001;
 
-// Access your API key as an environment variable
+// Configuration
+const PORT = 3001;
+const JSON_LIMIT = '50mb';
+
+// Validate API key
 const geminiApiKey = process.env.GEMINI_API_KEY;
 if (!geminiApiKey) {
-  console.error('GEMINI_API_KEY is not set in the .env file');
+  console.error('Error: GEMINI_API_KEY is not set in environment');
   process.exit(1);
 }
+
+// Initialize Gemini client
 const client = new GoogleGenAI({ apiKey: geminiApiKey });
 
+// Initialize Express app
+const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increased limit to 50mb
+app.use(express.json({ limit: JSON_LIMIT }));
 
-// Translation Endpoint
+/**
+ * Generates content using Gemini AI
+ * @param {string} prompt - The prompt to send to the AI
+ * @returns {Promise<string>} - The generated content
+ */
+async function generateContent(prompt) {
+  const response = await client.models.generateContent({
+    model: 'gemini-2.0-flash',
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: { thinkingConfig: { thinkingBudget: -1 } },
+  });
+
+  return response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+/**
+ * Creates an error response object
+ * @param {string} message - Error message
+ * @returns {Object} - Error response
+ */
+function errorResponse(message) {
+  return { success: false, error: message };
+}
+
+/**
+ * Creates a success response object
+ * @param {Object} data - Response data
+ * @returns {Object} - Success response
+ */
+function successResponse(data) {
+  return { success: true, data };
+}
+
+// ============================================================================
+// API Endpoints
+// ============================================================================
+
+/**
+ * POST /api/translate
+ * Translates document content to a target language
+ */
 app.post('/api/translate', async (req, res) => {
   const { documentId, content, targetLanguage } = req.body;
-  console.log(`Translating document ${documentId} to ${targetLanguage}`);
+  console.log(`[Translate] Document: ${documentId}, Language: ${targetLanguage}`);
 
   try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `Translate the following content into ${targetLanguage}. Preserve any LaTeX formatting.
+    const prompt = `Translate the following content into ${targetLanguage}. Preserve any LaTeX formatting.
 
 Content:
 ${content}
 
-Translated Content:`
-            }
-          ]
-        }
-      ],
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1
-        }
-      }
-    });
+Translated Content:`;
 
-    const translatedContent = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const translatedContent = await generateContent(prompt);
 
-    console.log('Gemini API Raw Translation Response:', translatedContent);
-
-    if (!translatedContent || translatedContent.trim() === '') {
-      console.warn('Gemini API returned empty translation for document:', documentId);
-      return res.status(500).json({ success: false, error: 'Gemini API returned an empty translation. Please try again with different content or language.' });
+    if (!translatedContent?.trim()) {
+      console.warn(`[Translate] Empty response for document: ${documentId}`);
+      return res.status(500).json(
+        errorResponse('Translation returned empty. Try different content or language.')
+      );
     }
 
-    res.json({ success: true, data: { translatedContent } });
+    res.json(successResponse({ translatedContent }));
   } catch (error) {
-    console.error('Error calling Gemini API for translation:', error);
-    console.error('Gemini API Error Details:', error);
-    res.status(500).json({ success: false, error: 'Failed to translate content using Gemini API.' });
+    console.error('[Translate] Error:', error.message);
+    res.status(500).json(errorResponse('Failed to translate content.'));
   }
 });
 
-// Summarization Endpoint
+/**
+ * POST /api/summarize
+ * Generates a summary of document content
+ */
 app.post('/api/summarize', async (req, res) => {
   const { documentId, content, length } = req.body;
-  console.log(`Summarizing document ${documentId} with length ${length}`);
+  console.log(`[Summarize] Document: ${documentId}, Length: ${length}`);
 
   try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `Summarize the following content. The desired length is ${length}.
+    const prompt = `Summarize the following content. The desired length is ${length}.
 
 Content:
 ${content}
 
-Summary:`
-            }
-          ]
-        }
-      ],
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1
-        }
-      }
-    });
+Summary:`;
 
-    const summary = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const summary = await generateContent(prompt);
 
-    res.json({ success: true, data: { summary } });
+    res.json(successResponse({ summary }));
   } catch (error) {
-    console.error('Error calling Gemini API for summarization:', error);
-    console.error('Gemini API Error Details:', error);
-    res.status(500).json({ success: false, error: 'Failed to generate summary using Gemini API.' });
+    console.error('[Summarize] Error:', error.message);
+    res.status(500).json(errorResponse('Failed to generate summary.'));
   }
 });
 
-// Quiz Generation Endpoint
+/**
+ * POST /api/quiz
+ * Generates a multiple-choice quiz from document content
+ */
 app.post('/api/quiz', async (req, res) => {
   const { documentId, content, count, difficulty } = req.body;
-  console.log(`Generating ${count} ${difficulty} quizzes for document ${documentId}`);
+  console.log(`[Quiz] Document: ${documentId}, Count: ${count}, Difficulty: ${difficulty}`);
 
   try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `Generate a multiple-choice quiz with ${count} questions based on the following content. The difficulty should be ${difficulty}. For each question, provide 4 options, the correct answer index (0-3), and a brief explanation. Ensure to preserve any LaTeX formatting.
+    const prompt = `Generate a multiple-choice quiz with ${count} questions based on the following content. The difficulty should be ${difficulty}. For each question, provide 4 options, the correct answer index (0-3), and a brief explanation. Preserve any LaTeX formatting.
 
 Content:
 ${content}
 
-Output format (JSON array of objects):
+Output format (JSON array):
 [
   {
     "question": "Question text with LaTeX if applicable",
@@ -129,98 +145,76 @@ Output format (JSON array of objects):
     "correctAnswer": 0,
     "explanation": "Explanation text with LaTeX if applicable"
   }
-]`
-            }
-          ]
-        }
-      ],
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1
-        }
-      }
-    });
+]`;
 
-    const quizText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const quizText = await generateContent(prompt);
 
-    // Attempt to parse the JSON response
+    // Parse JSON response
     let quiz;
     try {
+      let cleanText = quizText.trim();
+
       // Remove markdown code blocks if present
-      let cleanQuizText = quizText.trim();
-      if (cleanQuizText.startsWith('```json')) {
-        cleanQuizText = cleanQuizText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (cleanQuizText.startsWith('```')) {
-        cleanQuizText = cleanQuizText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      if (cleanText.startsWith('```json')) {
+        cleanText = cleanText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanText.startsWith('```')) {
+        cleanText = cleanText.replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
 
-      quiz = JSON.parse(cleanQuizText);
+      quiz = JSON.parse(cleanText);
+
       // Add unique IDs to questions
-      quiz.forEach((q, index) => q.id = `q${index + 1}`);
+      quiz.forEach((q, index) => {
+        q.id = `q${index + 1}`;
+      });
     } catch (parseError) {
-      console.error('Failed to parse quiz JSON:', parseError);
-      console.error('Raw quiz text:', quizText);
-      throw new Error('Failed to parse quiz response from AI. Please try again.');
+      console.error('[Quiz] Parse error:', parseError.message);
+      throw new Error('Failed to parse quiz response. Please try again.');
     }
 
-    res.json({ success: true, data: { quiz: { questions: quiz } } });
+    res.json(successResponse({ quiz: { questions: quiz } }));
   } catch (error) {
-    console.error('Error calling Gemini API for quiz generation:', error);
-    console.error('Gemini API Error Details:', error);
-    res.status(500).json({ success: false, error: error.message || 'Failed to generate quiz using Gemini API.' });
+    console.error('[Quiz] Error:', error.message);
+    res.status(500).json(errorResponse(error.message || 'Failed to generate quiz.'));
   }
 });
 
-// Chat with Document Endpoint
+/**
+ * POST /api/chat
+ * Provides AI chat responses about document content
+ */
 app.post('/api/chat', async (req, res) => {
   const { documentId, content, message } = req.body;
-  console.log(`Chatting about document ${documentId}. User message: "${message}"`);
+  console.log(`[Chat] Document: ${documentId}, Message: "${message.substring(0, 50)}..."`);
 
   try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `You are a helpful AI assistant that can answer questions about the following document content. Provide accurate, relevant responses based on the document. If the question cannot be answered from the document, say so politely.
+    const prompt = `You are a helpful AI assistant that answers questions about the following document. Provide accurate, relevant responses based on the document content. If the question cannot be answered from the document, say so politely.
 
 Document Content:
 ${content}
 
 User Question: ${message}
 
-Please provide a helpful response:`
-            }
-          ]
-        }
-      ],
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1
-        }
-      }
-    });
+Please provide a helpful response:`;
 
-    const botResponse = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const botResponse = await generateContent(prompt);
 
-    console.log('Gemini API Chat Response:', botResponse);
-
-    if (!botResponse || botResponse.trim() === '') {
-      console.warn('Gemini API returned empty chat response for document:', documentId);
-      return res.status(500).json({ success: false, error: 'Gemini API returned an empty response. Please try again.' });
+    if (!botResponse?.trim()) {
+      console.warn(`[Chat] Empty response for document: ${documentId}`);
+      return res.status(500).json(errorResponse('Empty response. Please try again.'));
     }
 
-    res.json({ success: true, data: { botResponse } });
+    res.json(successResponse({ botResponse }));
   } catch (error) {
-    console.error('Error calling Gemini API for chat:', error);
-    console.error('Gemini API Error Details:', error);
-    res.status(500).json({ success: false, error: 'Failed to get chat response using Gemini API.' });
+    console.error('[Chat] Error:', error.message);
+    res.status(500).json(errorResponse('Failed to get chat response.'));
   }
 });
 
+// ============================================================================
+// Server Startup
+// ============================================================================
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Polyform backend running on http://localhost:${PORT}`);
 });

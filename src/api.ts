@@ -1,64 +1,159 @@
-// src/api.ts
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin + '/api' : 'http://localhost:3001/api'); // Use environment variable or same origin for Vercel
+/**
+ * API Client Module
+ *
+ * Handles all communication with the backend API endpoints.
+ * Provides type-safe wrappers for translation, summarization, quiz, and chat operations.
+ */
 
+/** Base URL for API requests - uses environment variable or falls back to current origin */
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:3001/api');
+
+/** Generic API response structure */
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
 }
 
-export const callApi = async <T>(
+/** Translation response data */
+interface TranslationData {
+  translatedContent: string;
+}
+
+/** Summarization response data */
+interface SummaryData {
+  summary: string;
+}
+
+/** Quiz response data */
+interface QuizData {
+  quiz: {
+    questions: Array<{
+      id: string;
+      question: string;
+      options: string[];
+      correctAnswer: number;
+      explanation: string;
+    }>;
+  };
+}
+
+/** Chat response data */
+interface ChatData {
+  botResponse: string;
+}
+
+/**
+ * Makes an API request to the backend
+ * @param endpoint - API endpoint path
+ * @param method - HTTP method (default: GET)
+ * @param data - Request body data
+ * @returns Promise with typed API response
+ */
+async function callApi<T>(
   endpoint: string,
   method: string = 'GET',
-  data?: any
-): Promise<ApiResponse<T>> => {
+  data?: unknown
+): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
 
   const config: RequestInit = {
     method,
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: data ? JSON.stringify(data) : undefined,
   };
 
   try {
-    console.log('Making API call to:', url, 'with data:', data);
     const response = await fetch(url, config);
-    console.log('API response status:', response.status);
-    console.log('API response ok:', response.ok);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('API error response:', errorData);
-      return { success: false, error: errorData.message || `HTTP error! status: ${response.status}` };
+      return {
+        success: false,
+        error: errorData.message || `HTTP error: ${response.status}`,
+      };
     }
 
-    const rawResponse = await response.json();
-    console.log('Raw backend response:', rawResponse);
-
-    // The backend already returns { success, data, error }, so we return it as-is
-    return rawResponse as ApiResponse<T>;
-  } catch (error: any) {
-    console.log('API call error:', error);
-    return { success: false, error: error.message || 'Network error' };
+    return (await response.json()) as ApiResponse<T>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Network error';
+    return { success: false, error: message };
   }
-};
+}
 
-// Define specific API functions for each feature
-export const translateContent = async (documentId: string, content: string, targetLanguage: string) => {
-  return callApi<{ translatedContent: string }>('/translate', 'POST', { documentId, content, targetLanguage });
-};
+/**
+ * Translates document content to the specified language
+ * @param documentId - Unique document identifier
+ * @param content - Content to translate
+ * @param targetLanguage - Target language code
+ */
+export function translateContent(
+  documentId: string,
+  content: string,
+  targetLanguage: string
+): Promise<ApiResponse<TranslationData>> {
+  return callApi<TranslationData>('/translate', 'POST', {
+    documentId,
+    content,
+    targetLanguage,
+  });
+}
 
-export const summarizeContent = async (documentId: string, content: string, length: 'short' | 'medium' | 'detailed') => {
-  return callApi<{ summary: string }>('/summarize', 'POST', { documentId, content, length });
-};
+/**
+ * Generates a summary of document content
+ * @param documentId - Unique document identifier
+ * @param content - Content to summarize
+ * @param length - Desired summary length
+ */
+export function summarizeContent(
+  documentId: string,
+  content: string,
+  length: 'short' | 'medium' | 'detailed'
+): Promise<ApiResponse<SummaryData>> {
+  return callApi<SummaryData>('/summarize', 'POST', {
+    documentId,
+    content,
+    length,
+  });
+}
 
-export const generateQuiz = async (documentId: string, content: string, count: number, difficulty: 'easy' | 'medium' | 'hard') => {
-  return callApi<{ quiz: any }>('/quiz', 'POST', { documentId, content, count, difficulty });
-};
+/**
+ * Generates a quiz from document content
+ * @param documentId - Unique document identifier
+ * @param content - Content to generate quiz from
+ * @param count - Number of questions
+ * @param difficulty - Quiz difficulty level
+ */
+export function generateQuiz(
+  documentId: string,
+  content: string,
+  count: number,
+  difficulty: 'easy' | 'medium' | 'hard'
+): Promise<ApiResponse<QuizData>> {
+  return callApi<QuizData>('/quiz', 'POST', {
+    documentId,
+    content,
+    count,
+    difficulty,
+  });
+}
 
-export const chatWithDocument = async (documentId: string, content: string, message: string) => {
-  return callApi<{ botResponse: string }>('/chat', 'POST', { documentId, content, message });
-};
+/**
+ * Sends a chat message about document content
+ * @param documentId - Unique document identifier
+ * @param content - Document content for context
+ * @param message - User's chat message
+ */
+export function chatWithDocument(
+  documentId: string,
+  content: string,
+  message: string
+): Promise<ApiResponse<ChatData>> {
+  return callApi<ChatData>('/chat', 'POST', {
+    documentId,
+    content,
+    message,
+  });
+}

@@ -1,8 +1,16 @@
+/**
+ * Chat Panel Component
+ *
+ * Provides an interactive chat interface for document-based conversations.
+ * Users can ask questions about uploaded documents and receive AI-generated responses.
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, Bot, User, FileText } from 'lucide-react';
 import LaTeXRenderer from './LaTeXRenderer';
-import { chatWithDocument } from '../api'; // Import the API function
+import { chatWithDocument } from '../api';
 
+/** Document data structure */
 interface Document {
   id: string;
   name: string;
@@ -10,10 +18,12 @@ interface Document {
   type: string;
 }
 
+/** Component props */
 interface ChatPanelProps {
   documents: Document[];
 }
 
+/** Chat message structure */
 interface Message {
   id: string;
   type: 'user' | 'bot';
@@ -21,6 +31,9 @@ interface Message {
   timestamp: Date;
 }
 
+/**
+ * Chat Panel Component
+ */
 const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -29,75 +42,88 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSendMessage = async () => {
+  /**
+   * Sends a message and receives AI response
+   */
+  const handleSendMessage = async (): Promise<void> => {
     if (!inputMessage.trim() || !selectedDoc) return;
 
-    const document = documents.find(doc => doc.id === selectedDoc);
+    const document = documents.find((doc) => doc.id === selectedDoc);
     if (!document) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputMessage('');
     setIsTyping(true);
 
     try {
       const response = await chatWithDocument(document.id, document.content, inputMessage);
-      
+
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Chat failed');
       }
 
-      const botResponse = response.data.botResponse;
-      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: botResponse,
-        timestamp: new Date()
+        content: response.data.botResponse,
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, botMessage]);
-      setError(null); // Clear any previous errors
-    } catch (error: any) {
-      console.error('Failed to get bot response:', error);
-      setError(error.message || 'Failed to get bot response. Please try again.');
+      setMessages((prev) => [...prev, botMessage]);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to get response';
+      setError(message);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  /**
+   * Handles Enter key to send message
+   */
+  const handleKeyPress = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
+  // Empty state when no documents available
   if (documents.length === 0) {
     return (
       <div className="p-8 text-center dark:bg-dark-background dark:text-dark-text-secondary">
         <MessageCircle className="h-16 w-16 text-gray-300 dark:text-dark-text-secondary mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">No Documents Available</h3>
-        <p className="text-gray-500 dark:text-dark-text-secondary">Upload documents in the Content Input tab to start chatting.</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-2">
+          No Documents Available
+        </h3>
+        <p className="text-gray-500 dark:text-dark-text-secondary">
+          Upload documents in the Content Input tab to start chatting.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="h-[600px] flex flex-col dark:bg-dark-background dark:text-dark-text rounded-lg">
+      {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-dark-input-border">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text mb-4">Chat with Documents</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text mb-4">
+          Chat with Documents
+        </h2>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
             Select Document to Chat About
@@ -108,23 +134,28 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
             className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-dark-input-bg dark:border-dark-input-border dark:text-dark-text"
           >
             <option value="">Choose a document...</option>
-            {documents.map(doc => (
+            {documents.map((doc) => (
               <option key={doc.id} value={doc.id}>
                 {doc.name} ({doc.content.length} chars)
               </option>
             ))}
-            </select>
-          </div>
+          </select>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 dark:bg-red-900 dark:border-red-700 dark:text-red-300" role="alert">
-            <strong className="font-bold">Error:</strong>
-            <span className="block sm:inline"> {error}</span>
-          </div>
-        )}
+      {/* Error Message */}
+      {error && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4 mx-6 dark:bg-red-900 dark:border-red-700 dark:text-red-300"
+          role="alert"
+        >
+          <strong className="font-bold">Error: </strong>
+          <span>{error}</span>
+        </div>
+      )}
 
-        {!selectedDoc ? (
+      {/* Chat Area */}
+      {!selectedDoc ? (
         <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-dark-text-secondary">
           <div className="text-center">
             <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -133,6 +164,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
         </div>
       ) : (
         <>
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-gray-500 dark:text-dark-text-secondary py-8">
@@ -141,31 +173,52 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
                 <p className="text-sm">Ask questions, request summaries, or explore concepts.</p>
               </div>
             )}
-            
-            {messages.map(message => (
-              <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-3xl flex space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                  <div className={`flex-shrink-0 ${message.type === 'user' ? 'bg-blue-600' : 'bg-gray-600 dark:bg-dark-input-bg'} rounded-full w-8 h-8 flex items-center justify-center`}>
+
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-3xl flex space-x-3 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                    }`}
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`flex-shrink-0 rounded-full w-8 h-8 flex items-center justify-center ${message.type === 'user'
+                        ? 'bg-blue-600'
+                        : 'bg-gray-600 dark:bg-dark-input-bg'
+                      }`}
+                  >
                     {message.type === 'user' ? (
                       <User className="h-4 w-4 text-white" />
                     ) : (
                       <Bot className="h-4 w-4 text-white" />
                     )}
                   </div>
-                  <div className={`rounded-lg px-4 py-3 ${
-                    message.type === 'user' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-900 dark:bg-dark-surface dark:text-dark-text'
-                  }`}>
+
+                  {/* Message Content */}
+                  <div
+                    className={`rounded-lg px-4 py-3 ${message.type === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-900 dark:bg-dark-surface dark:text-dark-text'
+                      }`}
+                  >
                     <LaTeXRenderer content={message.content} />
-                    <div className={`text-xs mt-2 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-dark-text-secondary'}`}>
+                    <div
+                      className={`text-xs mt-2 ${message.type === 'user'
+                          ? 'text-blue-100'
+                          : 'text-gray-500 dark:text-dark-text-secondary'
+                        }`}
+                    >
                       {message.timestamp.toLocaleTimeString()}
                     </div>
                   </div>
                 </div>
               </div>
             ))}
-            
+
+            {/* Typing Indicator */}
             {isTyping && (
               <div className="flex justify-start">
                 <div className="max-w-3xl flex space-x-3">
@@ -174,17 +227,25 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ documents }) => {
                   </div>
                   <div className="bg-gray-100 text-gray-900 dark:bg-dark-surface dark:text-dark-text rounded-lg px-4 py-3">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '0.1s' }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        style={{ animationDelay: '0.2s' }}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Input Area */}
           <div className="border-t border-gray-200 dark:border-dark-input-border p-6">
             <div className="flex space-x-4">
               <textarea
